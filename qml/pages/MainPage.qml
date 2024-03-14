@@ -1,23 +1,21 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtSparql 1.0
+import QtDocGallery 5.0
 
 Page {
     id: page
 
-    SparqlListModel {
+    DocumentGalleryModel {
         id: queryModel
-        objectName: "queryModel"
-
-        connection: SparqlConnection {
-            id:sparqlConnection;
-            objectName: "sparqlConnection";
-            driver: "QTRACKER_DIRECT"
+        properties: ["url", "fileName"]
+        sortProperties: ["+fileName"]
+        rootType: DocumentGallery.File
+        filter: GalleryFilterUnion {
+            filters: [
+                GalleryEqualsFilter { property: "fileExtension"; value: "iso" },
+                GalleryEqualsFilter { property: "fileExtension"; value: "ISO" }
+            ]
         }
-
-        query: "SELECT ?filePath ?fileName WHERE { ?fileUri a nfo:FileDataObject ; "+
-               "nie:url $filePath ; nfo:fileName ?fileName. " +
-               "FILTER (fn:ends-with(fn:lower-case(nfo:fileName(?fileUri)), '.iso')) }"
     }
 
     Timer {
@@ -58,8 +56,8 @@ Page {
                 function showRemorseItem() {
                     var idx = index
                     remorse.execute(delegate, qsTr("Deleting"), function() {
-                        var deleteSuccess = fileManager.removeFile(filePath)
-                        console.log("ISO file deletion success? " + deleteSuccess)
+                        var deleteSuccess = fileManager.removeFile(url)
+                        console.log(url+"ISO file deletion success? " + deleteSuccess)
                         delayedReload.restart();
                     }, 3000)
                 }
@@ -69,18 +67,18 @@ Page {
                     x: Theme.paddingLarge
                     text: fileName
                     anchors.verticalCenter: parent.verticalCenter
-                    checked: isoManager.isEnabledISO(filePath)
+                    checked: isoManager.isEnabledISO(url)
 
                     property var isoContextMenu : null
 
                     onClicked: {
-                        if(isoManager.isEnabledISO(filePath) && !checked) {
+                        if(isoManager.isEnabledISO(url) && !checked) {
                             isoManager.resetISO();
                         }
 
                         if(checked) {
-                            isoManager.enableISO(filePath);
-                            checked = isoManager.isEnabledISO(filePath)
+                            isoManager.enableISO(url);
+                            checked = isoManager.isEnabledISO(url)
                         }
                     }
 
